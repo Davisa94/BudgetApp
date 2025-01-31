@@ -15,11 +15,13 @@
 #CXX = clang++
 
 EXE = demo_app
+BUILD_DIR = ../build
 IMGUI_DIR = ../
 SOURCES = main.cpp
 SOURCES += $(IMGUI_DIR)/imgui/imgui.cpp $(IMGUI_DIR)/imgui/imgui_demo.cpp $(IMGUI_DIR)/imgui/imgui_draw.cpp $(IMGUI_DIR)/imgui/imgui_tables.cpp $(IMGUI_DIR)/imgui/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
+OBJS := $(addprefix $(BUILD_DIR)/, $(OBJS))
 UNAME_S := $(shell uname -s)
 LINUX_GL_LIBS = -lGL
 
@@ -70,20 +72,30 @@ endif
 ## BUILD RULES
 ##---------------------------------------------------------------------
 
-%.o:%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-%.o:$(IMGUI_DIR)/imgui/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-%.o:$(IMGUI_DIR)/backends/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+.SECONDEXPANSION:
 
-all: $(EXE)
+all: $(BUILD_DIR) $(BUILD_DIR)/$(EXE)
 	@echo Build complete for $(ECHO_MESSAGE)
 
-$(EXE): $(OBJS)
+$(BUILD_DIR):
+	mkdir -p $@
+
+$(BUILD_DIR)/$(EXE): $$(OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
+$(BUILD_DIR)/%.o:%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(BUILD_DIR)/%.o:$(IMGUI_DIR)/imgui/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(BUILD_DIR)/%.o:$(IMGUI_DIR)/backends/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
 clean:
-	rm -f $(EXE) $(OBJS)
+	@echo Cleaning...
+	@echo removing $(OBJS)
+	@echo removing $(BUILD_DIR)/$(EXE)
+	rm -f $(BUILD_DIR)/$(EXE) $(OBJS)
